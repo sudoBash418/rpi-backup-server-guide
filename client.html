@@ -35,7 +35,7 @@
 <p>Open up the Control Panel, go to Programs and Features, click on <em>Turn Windows features on or off</em>, scroll down and check the box beside <em>Windows Subsystem for Linux</em>.<br />
 Press <em>OK</em> to enable the feature. Windows will ask to reboot your computer, click <em>Restart Now</em>.</p>
 
-<p><img src="/assets/windows_features_enable_wsl.png" alt="" /></p>
+<p><img src="assets/windows_features_enable_wsl.png" alt="" /></p>
 
 <h2 id="installing-ubuntu">Installing Ubuntu</h2>
 
@@ -119,16 +119,16 @@ borg check
 </code></pre></div></div>
 
 <p>Open up Task Scheduler and click <em>Create Task…</em> in the sidebar labelled <em>Actions</em>.<br />
-<img src="/assets/task_sched_sidebar.png" alt="" /></p>
+<img src="assets/task_sched_sidebar.png" alt="" /></p>
 
 <p>Set a name for the task, and select the <em>Run whether the user is logged in or not</em> and <em>Do not store password</em> options.<br />
-<img src="/assets/task_sched_create_task.png" alt="" /></p>
+<img src="assets/task_sched_create_task.png" alt="" /></p>
 
 <p>Go to the <em>Triggers</em> tab, click <em>New…</em>, and set a schedule for the backups.<br />
-<img src="/assets/task_sched_trigger_sched.png" alt="" /></p>
+<img src="assets/task_sched_trigger_sched.png" alt="" /></p>
 
 <p>Go to the <em>Actions</em> tab, click <em>New…</em>, enter <code class="highlighter-rouge">wsl</code> for the program field, and <code class="highlighter-rouge">-e /root/backup.sh</code> for the arguments field.<br />
-<img src="/assets/task_sched_action.png" alt="" /></p>
+<img src="assets/task_sched_action.png" alt="" /></p>
 
 <p>Click <em>OK</em> to create the task, which will now automatically backup the computer according to the schedule you created.</p>
 
