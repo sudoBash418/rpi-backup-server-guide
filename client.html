@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+
+<!-- Begin Jekyll SEO tag v2.6.1 -->
+<title>How to turn a Raspberry Pi into a network backup server</title>
+<meta name="generator" content="Jekyll v3.8.6" />
+<meta property="og:title" content="How to turn a Raspberry Pi into a network backup server" />
+<meta property="og:locale" content="en_US" />
+<link rel="canonical" href="/client.html" />
+<meta property="og:url" content="/client.html" />
+<meta property="og:site_name" content="How to turn a Raspberry Pi into a network backup server" />
+<script type="application/ld+json">
+{"@type":"WebPage","url":"/client.html","headline":"How to turn a Raspberry Pi into a network backup server","@context":"https://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <link rel="stylesheet" href="/assets/css/style.css?v=">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">How to turn a Raspberry Pi into a network backup server</h1>
+      <!--<h2 class="project-tagline"></h2>-->
+      
+      
+    </section>
+
+    <section class="main-content">
+      <h1 id="setting-up-wsl">Setting up WSL</h1>
+
+<h2 id="enable-wsl">Enable WSL</h2>
+
+<p>Open up the Control Panel, go to Programs and Features, click on <em>Turn Windows features on or off</em>, scroll down and check the box beside <em>Windows Subsystem for Linux</em>.<br />
+Press <em>OK</em> to enable the feature. Windows will ask to reboot your computer, click <em>Restart Now</em>.</p>
+
+<p><img src="/assets/windows_features_enable_wsl.png" alt="" /></p>
+
+<h2 id="installing-ubuntu">Installing Ubuntu</h2>
+
+<p>Open Microsoft Store, search for “Ubuntu” and install it.<br />
+When it is finished installing, open the Ubuntu installer located in the start menu. When it asks for a username, you can close the window.</p>
+
+<h1 id="setting-up-soemthing">Setting up soemthing</h1>
+
+<p>Open a WSL terminal by pressing Win+R and typing <code class="highlighter-rouge">wsl</code> followed by enter.</p>
+
+<p>Update the Ubuntu installation by typing <code class="highlighter-rouge">apt-get update</code> followed by <code class="highlighter-rouge">apt-get -y full-upgrade</code>.</p>
+
+<p>Enter <code class="highlighter-rouge">nano /root/setup.sh</code> to create a new file, and copy+paste the following script:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+<span class="nb">set</span> <span class="nt">-e</span>
+
+<span class="c"># get server hostname</span>
+<span class="nb">read</span> <span class="nt">-p</span> <span class="s2">"Enter the backup server's hostname: "</span> server_name
+
+<span class="c"># get computer name</span>
+<span class="nb">read</span> <span class="nt">-p</span> <span class="s2">"Enter this computer's backup name: "</span> buser
+<span class="nv">full_bname</span><span class="o">=</span><span class="s2">"backup-</span><span class="nv">$buser</span><span class="s2">"</span>
+
+<span class="c"># save to disk</span>
+<span class="nb">echo</span> <span class="s2">"</span><span class="nv">$buser</span><span class="s2">"</span> <span class="o">&gt;</span> /root/.backup_username
+<span class="nb">echo</span> <span class="s2">"</span><span class="nv">$server_name</span><span class="s2">"</span> <span class="o">&gt;</span> /root/.backup_server
+
+<span class="c"># generate ssh keypair</span>
+ssh-keygen <span class="nt">-t</span> ed25519 <span class="nt">-N</span> <span class="s1">''</span> <span class="nt">-f</span> /root/.ssh/id_ed25519
+
+<span class="c"># copy ssh pubkey to server (will prompt for server root password)</span>
+&lt;/root/.ssh/id_ed25519.pub ssh root@<span class="s2">"</span><span class="nv">$server_name</span><span class="s2">"</span> <span class="nb">sudo</span> <span class="nt">-u</span> <span class="s2">"</span><span class="nv">$full_bname</span><span class="s2">"</span> <span class="s2">"bash -c 'cat - &gt; /home/</span><span class="nv">$full_bname</span><span class="s2">/.ssh/authorized_keys; chmod 600 /home/</span><span class="nv">$full_bname</span><span class="s2">/.ssh/authorized_keys'"</span>
+
+<span class="c"># install borgbackup</span>
+apt-get <span class="nb">install </span>borgbackup
+
+<span class="c"># initialize borg repository</span>
+<span class="nb">echo</span> <span class="s2">"Initializing borg repo..."</span>
+borg init <span class="nt">-e</span> none <span class="s2">"</span><span class="nv">$full_bname</span><span class="s2">"</span>@<span class="s2">"</span><span class="nv">$server_name</span><span class="s2">"</span>:/backup/<span class="s2">"</span><span class="nv">$full_bname</span><span class="s2">"</span>/borg
+</code></pre></div></div>
+
+<p>Press Ctrl-S to save and Ctrl-X to exit.<br />
+Run the script by typing <code class="highlighter-rouge">bash /root/setup.sh</code>, and answer the prompts.</p>
+
+<p>Enter <code class="highlighter-rouge">nano /root/backup.sh</code> to create another file, and copy-paste the following script:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
+
+<span class="nv">bname</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>&lt;/root/.backup_username<span class="si">)</span><span class="s2">"</span>
+<span class="nv">server_name</span><span class="o">=</span><span class="s2">"</span><span class="si">$(</span>&lt;/root/.backup_server<span class="si">)</span><span class="s2">"</span>
+
+<span class="nb">export </span><span class="nv">BORG_REPO</span><span class="o">=</span><span class="s2">"backup-</span><span class="nv">$bname</span><span class="s2">"</span>@<span class="s2">"</span><span class="nv">$server_name</span><span class="s2">"</span>:/backup/<span class="s2">"backup-</span><span class="nv">$bname</span><span class="s2">"</span>/borg
+
+dt<span class="o">()</span> <span class="o">{</span>
+	<span class="nb">date</span> <span class="s1">'+%Y-%m-%d %H:%M:%S'</span>
+<span class="o">}</span>
+
+<span class="c"># figure out if we're running 1.2+ yet</span>
+<span class="k">if</span> <span class="o">[[</span> <span class="si">$(</span>borg <span class="nt">--version</span> | <span class="nb">cut</span> <span class="nt">-f2</span> <span class="nt">-d</span><span class="s1">' '</span><span class="si">)</span> <span class="o">&gt;</span> 1.2 <span class="o">]]</span><span class="p">;</span> <span class="k">then
+	</span><span class="nv">borg_is_1_2_yet</span><span class="o">=</span>1
+<span class="k">else
+	</span><span class="nv">borg_is_1_2_yet</span><span class="o">=</span>0
+<span class="k">fi</span>
+
+<span class="c"># cleanup old backups</span>
+<span class="nb">echo</span> <span class="s2">"</span><span class="si">$(</span>dt<span class="si">)</span><span class="s2"> Pruning old backups..."</span>
+borg prune <span class="nt">-v</span> <span class="nt">--list</span> <span class="nt">--keep-daily</span><span class="o">=</span>7 <span class="nt">--keep-weekly</span><span class="o">=</span>8 <span class="nt">--keep-monthly</span><span class="o">=</span>12
+<span class="k">if</span> <span class="o">((</span><span class="nv">$borg_is_1_2_yet</span><span class="o">))</span><span class="p">;</span> <span class="k">then
+	</span>borg compact
+<span class="k">fi</span>
+
+<span class="c"># create a new backup</span>
+<span class="nb">echo</span> <span class="s2">"</span><span class="si">$(</span>dt<span class="si">)</span><span class="s2"> Creating backup..."</span>
+borg create <span class="nt">--stats</span> <span class="s1">'::{now}'</span> /mnt/c
+
+<span class="c"># check repo consistency</span>
+<span class="nb">echo</span> <span class="s2">"</span><span class="si">$(</span>dt<span class="si">)</span><span class="s2"> Checking repository consistency..."</span>
+borg check
+
+<span class="nb">echo</span> <span class="s2">"</span><span class="si">$(</span>dt<span class="si">)</span><span class="s2"> Finished backup job."</span>
+</code></pre></div></div>
+
+<p>Open up Task Scheduler and click <em>Create Task…</em> in the sidebar labelled <em>Actions</em>.<br />
+<img src="/assets/task_sched_sidebar.png" alt="" /></p>
+
+<p>Set a name for the task, and select the <em>Run whether the user is logged in or not</em> and <em>Do not store password</em> options.<br />
+<img src="/assets/task_sched_create_task.png" alt="" /></p>
+
+<p>Go to the <em>Triggers</em> tab, click <em>New…</em>, and set a schedule for the backups.<br />
+<img src="/assets/task_sched_trigger_sched.png" alt="" /></p>
+
+<p>Go to the <em>Actions</em> tab, click <em>New…</em>, enter <code class="highlighter-rouge">wsl</code> for the program field, and <code class="highlighter-rouge">-e /root/backup.sh</code> for the arguments field.<br />
+<img src="/assets/task_sched_action.png" alt="" /></p>
+
+<p>Click <em>OK</em> to create the task, which will now automatically backup the computer according to the schedule you created.</p>
+
+<p>That’s it!</p>
+
+
+      <footer class="site-footer">
+        
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>
+      </footer>
+    </section>
+
+    
+  </body>
+</html>
