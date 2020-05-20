@@ -22,31 +22,35 @@
   <body>
     <section class="page-header">
       <h1 class="project-name">How to turn a Raspberry Pi into a network backup server</h1>
-      <!--<h2 class="project-tagline"></h2>-->
+      <h2 class="project-tagline">Client Configuration</h2>
       
       
     </section>
 
     <section class="main-content">
-      <h1 id="setting-up-wsl">Setting up WSL</h1>
+      <p>(This guide assumes a server has been setup according to the <a href="index.html">Server Configuration</a> page)</p>
 
-<h2 id="enable-wsl">Enable WSL</h2>
+<hr />
+
+<h2 id="step-1-enable-wsl">Step 1: Enable WSL</h2>
 
 <p>Open up the Control Panel, go to Programs and Features, click on <em>Turn Windows features on or off</em>, scroll down and check the box beside <em>Windows Subsystem for Linux</em>.<br />
 Press <em>OK</em> to enable the feature. Windows will ask to reboot your computer, click <em>Restart Now</em>.</p>
 
 <p><img src="assets/windows_features_enable_wsl.png" alt="" /></p>
 
-<h2 id="installing-ubuntu">Installing Ubuntu</h2>
+<h2 id="step-2-install-ubuntu">Step 2: Install Ubuntu</h2>
 
 <p>Open Microsoft Store, search for “Ubuntu” and install it.<br />
 When it is finished installing, open the Ubuntu installer located in the start menu. When it asks for a username, you can close the window.</p>
 
-<h1 id="setting-up-soemthing">Setting up soemthing</h1>
+<h2 id="step-3-update--configure-ubuntu">Step 3: Update + configure Ubuntu</h2>
 
 <p>Open a WSL terminal by pressing Win+R and typing <code class="highlighter-rouge">wsl</code> followed by enter.</p>
 
 <p>Update the Ubuntu installation by typing <code class="highlighter-rouge">apt-get update</code> followed by <code class="highlighter-rouge">apt-get -y full-upgrade</code>.</p>
+
+<h2 id="step-4-run-the-setup-script">Step 4: Run the setup script</h2>
 
 <p>Enter <code class="highlighter-rouge">nano /root/setup.sh</code> to create a new file, and copy+paste the following script:</p>
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
@@ -80,6 +84,8 @@ borg init <span class="nt">-e</span> none <span class="s2">"</span><span class="
 
 <p>Press Ctrl-S to save and Ctrl-X to exit.<br />
 Run the script by typing <code class="highlighter-rouge">bash /root/setup.sh</code>, and answer the prompts.</p>
+
+<h2 id="step-5-create-the-backup-script">Step 5: Create the backup script</h2>
 
 <p>Enter <code class="highlighter-rouge">nano /root/backup.sh</code> to create another file, and copy-paste the following script:</p>
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">#!/bin/bash</span>
@@ -118,6 +124,11 @@ borg check
 <span class="nb">echo</span> <span class="s2">"</span><span class="si">$(</span>dt<span class="si">)</span><span class="s2"> Finished backup job."</span>
 </code></pre></div></div>
 
+<p>Press Ctrl-S to save and Ctrl-X to exit.<br />
+Enter <code class="highlighter-rouge">chmod +x /root/backup.sh</code> to make the script executable.</p>
+
+<h2 id="step-6-scheduling-the-automatic-backup">Step 6: Scheduling the automatic backup</h2>
+
 <p>Open up Task Scheduler and click <em>Create Task…</em> in the sidebar labelled <em>Actions</em>.<br />
 <img src="assets/task_sched_sidebar.png" alt="" /></p>
 
@@ -131,8 +142,6 @@ borg check
 <img src="assets/task_sched_action.png" alt="" /></p>
 
 <p>Click <em>OK</em> to create the task, which will now automatically backup the computer according to the schedule you created.</p>
-
-<p>That’s it!</p>
 
 
       <footer class="site-footer">

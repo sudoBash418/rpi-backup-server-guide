@@ -22,7 +22,7 @@
   <body>
     <section class="page-header">
       <h1 class="project-name">How to turn a Raspberry Pi into a network backup server</h1>
-      <!--<h2 class="project-tagline"></h2>-->
+      <h2 class="project-tagline">Server Configuration</h2>
       
       
     </section>
@@ -160,7 +160,7 @@ For example, I live in Alberta, so I would use <code class="highlighter-rouge">A
 Make sure no other drives are connected to the Raspberry Pi, or you risk accidentally wiping them!</p>
 
 <p>Enter <code class="highlighter-rouge">wipefs -a /dev/sda</code> to wipe the drive.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@raspberrypi:~# wipefs -a /dev/sda
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@rpi-backup:~# wipefs -a /dev/sda
 /dev/sda: 8 bytes were erased at offset 0x00000200 (gpt): 45 46 49 20 50 41 52 54
 /dev/sda: 8 bytes were erased at offset 0x57541dffe00 (gpt): 45 46 49 20 50 41 52 54
 /dev/sda: 2 bytes were erased at offset 0x000001fe (PMBR): 55 aa
@@ -168,7 +168,7 @@ Make sure no other drives are connected to the Raspberry Pi, or you risk acciden
 </code></pre></div></div>
 
 <p>Type <code class="highlighter-rouge">fdisk /dev/sda</code> to get a screen similar to this:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@raspberrypi:~# fdisk /dev/sda
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@rpi-backup:~# fdisk /dev/sda
 
 Welcome to fdisk (util-linux 2.33.1).
 Changes will remain in memory only, until you decide to write them.
@@ -205,7 +205,7 @@ Syncing disks.
 </code></pre></div></div>
 
 <p>Type <code class="highlighter-rouge">mkfs.ext4 -L 'Backup Drive' /dev/sda1</code> to format the new partition.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@raspberrypi:~# mkfs.ext4 -L 'Backup Drive' /dev/sda1 
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@rpi-backup:~# mkfs.ext4 -L 'Backup Drive' /dev/sda1 
 mke2fs 1.44.5 (15-Dec-2018)
 Creating filesystem with 1465130235 4k blocks and 183144448 inodes
 Filesystem UUID: de21d0d6-040b-4212-944f-d4180764bf37
@@ -292,6 +292,10 @@ Enter <code class="highlighter-rouge">chmod +x create-user.sh remove-user.sh</co
 <p>For each workstation, run <code class="highlighter-rouge">./create-user.sh &lt;name&gt;</code>, where <code class="highlighter-rouge">&lt;name&gt;</code> is replaced by a unique name for the workstation. Make sure this name is lowercase, has no special characters, and no spaces.</p>
 
 <p>If you need to delete a user, run <code class="highlighter-rouge">./remove-user.sh &lt;name&gt;</code>, where <code class="highlighter-rouge">&lt;name&gt;</code> is the unique workstation name.</p>
+
+<hr />
+
+<p>Go to the <a href="client.html">Client Configuration</a> page to learn how to configure a Windows-based workstation to automatically backup to your new backup server.</p>
 
 
       <footer class="site-footer">
